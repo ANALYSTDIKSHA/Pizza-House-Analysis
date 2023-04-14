@@ -1,4 +1,5 @@
------PIZZA HOUSE ANALYSIS----
+PIZZA HOUSE ANALYSIS
+
 In this Project, We have performed Exploratory Data Analysis(EDA) on the Pizza House Dataset.
 In order to extract correct analysis out of the dataset, We have performed necessary Data cleaning on the Dataset.
 
