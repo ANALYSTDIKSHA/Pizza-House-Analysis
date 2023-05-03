@@ -9,7 +9,6 @@ SELECT * FROM pizza_runner.customer_orders;
 DROP TABLE IF EXISTS customer_orders_temp ;
 
 create TEMPORARY TABLE customer_orders_temp as
-
 select order_id,customer_id,pizza_id ,order_time ,
 case when exclusions REGEXP 'null' then NULL 
 	when exclusions like '' then NULL 
@@ -125,13 +124,13 @@ from customer_orders
 group by order_id ;
 
 #What was the maximum number of pizzas delivered in a single order?
-select *,count(*) as pizzas_each_order
+select order_id,count(*) as pizzas_each_order
 from customer_orders
 group by order_id 
 order by pizzas_each_order desc limit 1;
 
 # maximum no. of pizzas using cte
-with cte1 as(select *,count(*) as pizzas_each_order
+with cte1 as(select order_id,count(*) as pizzas_each_order
 from customer_orders
 group by order_id )
 select max(pizzas_each_order) from cte1  ;
@@ -148,24 +147,20 @@ where exclusions is not null or extras is not null
 group by customer_id ;
 
 # For each customer, how many pizzas had at least 1 change and how many had no changes?
-select customer_id,
-case when exclusions is null and extras is null then count(*)
-end as no_change ,
-case when exclusions is not null or extras is not null then count(*)
-end as new_change 
-from customer_orders_temp
-group by customer_id;
-
-# For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
-select customer_id,
-case when exclusions is null and extras is null then count(*)
-end as no_new_change,
-case when exclusions is not null or extras is not null then count(*)
-end as new_change  
-from customer_orders_temp as c
-inner join runner_orders_temp as r on c.order_id = r.order_id
-where r.cancellation is null
-group by customer_id;
+SELECT customer_id,
+SUM(CASE
+		WHEN (exclusions IS NOT NULL OR extras IS NOT NULL) THEN 1
+		ELSE 0
+	END) AS change_in_pizza,
+SUM(CASE
+		WHEN (exclusions IS NULL AND extras IS NULL) THEN 1
+		ELSE 0
+	END) AS no_change_in_pizza
+FROM customer_orders_temp
+INNER JOIN runner_orders_temp USING (order_id)
+WHERE cancellation IS NULL
+GROUP BY customer_id
+ORDER BY customer_id;
 
 # How many pizzas were delivered that had both exclusions and extras?
 select count(*)
